@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swing Trading Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        #main {
+            background: #fff;
+            color: #333;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #333;
+            color: #fff;
+            border: none;
+            margin: 5px;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e4e4e4;
+            border: 1px solid #ccc;
+        }
+        .analysis-section {
+            margin-bottom: 20px;
+        }
+        .analysis-section h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .analysis-section p {
+            margin: 5px 0;
+        }
+        .analysis-section img {
+            width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="main">
+            <h1>Swing Trading Bot</h1>
+            <button onclick="startExtraction()">Start Extraction</button>
+            <button onclick="startAnalysis()">Start Analysis</button>
+            <div>
+                <input type="text" id="prompt" placeholder="Enter prompt for in-depth analysis">
+                <button onclick="inDepthAnalysis()">In-depth Analysis</button>
+            </div>
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+    <script>
+        function startExtraction() {
+            fetch('/start-extraction', {
+                method: 'POST',
+            }).then(response => response.json()).then(data => {
+                document.getElementById('result').innerText = data.message;
+            });
+        }
+
+        function startAnalysis() {
+            fetch('/start-analysis', {
+                method: 'POST',
+            }).then(response => response.json()).then(data => {
+                document.getElementById('result').innerText = data.message;
+                loadResults();
+            });
+        }
+
+        function loadResults() {
+            fetch(`/get-results`)
+                .then(response => response.json())
+                .then(data => {
+                    let resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = '';
+
+                    Object.keys(data.results).forEach(file => {
+                        let analysis = data.results[file].analysis;
+                        let image = data.results[file].image;
+
+                        let section = document.createElement('div');
+                        section.classList.add('analysis-section');
+
+                        let header = document.createElement('h2');
+                        header.textContent = `Analysis for ${file}`;
+                        section.appendChild(header);
+
+                        let paragraphs = analysis.split('\n');
+                        paragraphs.forEach(paragraph => {
+                            let p = document.createElement('p');
+                            p.innerHTML = paragraph;
+                            section.appendChild(p);
+                        });
+
+                        let img = document.createElement('img');
+                        img.src = `data:image/png;base64,${image}`;
+                        section.appendChild(img);
+
+                        resultDiv.appendChild(section);
+                    });
+                });
+        }
+
+        function inDepthAnalysis() {
+            const prompt = document.getElementById('prompt').value;
+            fetch('/in-depth-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'prompt=' + encodeURIComponent(prompt)
+            }).then(response => response.json()).then(data => {
+                document.getElementById('result').innerText = data.result;
+            });
+        }
+    </script>
+</body>
+</html>
